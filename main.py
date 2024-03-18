@@ -1,7 +1,16 @@
+import os
 import yara
 
-rules = yara.compile(source='rule foo: bar {strings: $a = "lmn" condition: $a}')
 
-matches = rules.match(data='abcdefgjiklmnoprstuvwxyz')
+def create_rules_list(address):
+    yara_list = {}
+    files = os.listdir(address)
+    for file_name in files:
+        if '.yar' in file_name:
+            yara_list[file_name.split('.yar')[0]] = address + file_name
+    return yara_list
 
-print(matches['main'][0]['rule'])
+
+rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
+matches = rules.match(filepath='text.txt')
+print(matches)
