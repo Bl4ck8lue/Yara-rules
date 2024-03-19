@@ -1,5 +1,35 @@
 import os
 import yara
+import sys
+from PyQt6.QtWidgets import QWidget, QLineEdit, QApplication, QMainWindow, QPushButton, QHBoxLayout
+
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("AntiVirus Demo")
+        self.resize(400, 200)
+
+        layout = QHBoxLayout()
+        input = QLineEdit()
+
+        button = QPushButton("Press Me!")
+        button.setCheckable(True)
+        button.clicked.connect(self.the_button_was_clicked)
+
+        layout.addWidget(button)
+        layout.addWidget(input)
+
+        container = QWidget()
+
+        container.setLayout(layout)
+
+        self.setCentralWidget(container)
+
+    def the_button_was_clicked(self):
+        print("Clicked!")
+        rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
+        checking_files_in_directory(rules, 'dataDir/')
 
 
 def create_rules_list(address):
@@ -23,8 +53,13 @@ def checking_files_in_directory(rules_for_checking, address):
                     print("\t", match)
 
 
-rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
-checking_files_in_directory(rules, 'dataDir/')
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+
+app.exec()
+
+
 # matches = rules.match(filepath='dataDir/text.txt')
 
 # print(matches)
