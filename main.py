@@ -11,14 +11,14 @@ class MainWindow(QMainWindow):
         self.resize(400, 200)
 
         layout = QHBoxLayout()
-        input = QLineEdit()
+        self.input = QLineEdit(self)
 
-        button = QPushButton("Press Me!")
-        button.setCheckable(True)
-        button.clicked.connect(self.the_button_was_clicked)
+        self.button = QPushButton("Press Me!")
+        self.button.setCheckable(True)
+        self.button.clicked.connect(self.the_button_was_clicked)
 
-        layout.addWidget(button)
-        layout.addWidget(input)
+        layout.addWidget(self.button)
+        layout.addWidget(self.input)
 
         container = QWidget()
 
@@ -27,9 +27,16 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
     def the_button_was_clicked(self):
-        print("Clicked!")
+        text = self.input.text()
+        len_tex = len(self.input.text())
+        print(len_tex)
+        print(text[len_tex-1])
         rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
-        checking_files_in_directory(rules, 'dataDir/')
+        if text[len_tex-1] == '/':
+            checking_files_in_directory(rules, self.input.text())
+        else:
+            matches = rules.match(self.input.text())
+            print(matches)
 
 
 def create_rules_list(address):
