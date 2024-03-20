@@ -31,8 +31,9 @@ class MainWindow(QMainWindow):
         len_tex = len(self.input.text())
         print(len_tex)
         print(text[len_tex-1])
+        print(os.path.isdir(self.input.text()))
         rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
-        if text[len_tex-1] == '/':
+        if os.path.isdir(self.input.text()):
             checking_files_in_directory(rules, self.input.text())
         else:
             matches = rules.match(self.input.text())
