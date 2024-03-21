@@ -34,16 +34,16 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
     def the_button_was_clicked(self):
-        text = self.input.text()
-        len_tex = len(self.input.text())
+        text = self.input_path_to_dir_or_file.text()
+        len_tex = len(self.input_path_to_dir_or_file.text())
         print(len_tex)
         print(text[len_tex-1])
-        print(os.path.isdir(self.input.text()))
+        print(os.path.isdir(self.input_path_to_dir_or_file.text()))
         rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
-        if os.path.isdir(self.input.text()):
-            checking_files_in_directory(rules, self.input.text())
+        if os.path.isdir(self.input_path_to_dir_or_file.text()):
+            checking_files_in_directory(rules, self.input_path_to_dir_or_file.text())
         else:
-            matches = rules.match(self.input.text())
+            matches = rules.match(self.input_path_to_dir_or_file.text())
             print(matches)
 
 
