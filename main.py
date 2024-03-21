@@ -1,24 +1,31 @@
 import os
 import yara
 import sys
-from PyQt6.QtWidgets import QWidget, QLineEdit, QApplication, QMainWindow, QPushButton, QHBoxLayout
+from PyQt6.QtWidgets import QWidget, QLineEdit, QApplication, QMainWindow, QPushButton, QHBoxLayout, QLabel, QGridLayout
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("AntiVirus Demo")
-        self.resize(400, 200)
+        self.resize(300, 100)
 
-        layout = QHBoxLayout()
-        self.input = QLineEdit(self)
+        layout = QGridLayout()
+        self.input_path_to_dir_or_file = QLineEdit(self)
+        self.input_path_to_doc = QLineEdit(self)
 
-        self.button = QPushButton("Press Me!")
+        path_to_dir_or_file = QLabel("Введите путь к папке/файлу, который необходимо просканировать:")
+        path_to_doc = QLabel("Введите путь к папке, куда будет сохранён отчёт о сканировании:")
+
+        self.button = QPushButton("Просканировать")
         self.button.setCheckable(True)
         self.button.clicked.connect(self.the_button_was_clicked)
 
-        layout.addWidget(self.button)
-        layout.addWidget(self.input)
+        layout.addWidget(path_to_dir_or_file, 0, 0)
+        layout.addWidget(self.input_path_to_dir_or_file, 1, 0)
+        layout.addWidget(path_to_doc, 2, 0)
+        layout.addWidget(self.input_path_to_doc, 3, 0)
+        layout.addWidget(self.button, 4, 0)
 
         container = QWidget()
 
