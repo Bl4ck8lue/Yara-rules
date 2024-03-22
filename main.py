@@ -20,6 +20,35 @@ def create_rules_list(address):
     return yara_list
 
 
+def print_in_document(path_to_check, matches):
+    document = Document()
+
+    # print(f"The file {path_to_check} follows the following rules:")
+    for match in matches:
+
+        print("\t", match)
+        if os.path.exists(f'docxDir/{path_to_check}.docx'):
+            # self.warning()
+            document.add_heading(f"The file {path_to_check} follows the following rules:", level=2)
+            document.add_paragraph(match)
+            document.save(f'docxDir/{path_to_check}_scan.docx')
+            # break
+        else:
+            document.add_heading(f"The file {path_to_check} follows the following rules:", level=2)
+            document.add_paragraph(match)
+            document.save(f'docxDir/{path_to_check}_scan.docx')
+
+
+def checking_files_in_directory(rules_for_checking, address):
+    directory_path = address
+    for filename in os.listdir(directory_path):
+        filepath = os.path.join(directory_path, filename)
+        if os.path.isfile(filepath):
+            matches_files = rules_for_checking.match(filepath)
+            if matches_files:
+                print_in_document(filename, matches_files)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -31,10 +60,8 @@ class MainWindow(QMainWindow):
 
         layout = QGridLayout()
         self.input_path_to_dir_or_file = QLineEdit(self)
-        self.input_path_to_doc = QLineEdit(self)
 
         path_to_dir_or_file = QLabel("Введите путь к папке/файлу, который необходимо просканировать:")
-        path_to_doc = QLabel("Введите название отчёта о сканировании:")
 
         self.button = QPushButton("Просканировать")
         self.button.setCheckable(True)
@@ -42,9 +69,7 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(path_to_dir_or_file, 0, 0)
         layout.addWidget(self.input_path_to_dir_or_file, 1, 0)
-        layout.addWidget(path_to_doc, 2, 0)
-        layout.addWidget(self.input_path_to_doc, 3, 0)
-        layout.addWidget(self.button, 4, 0)
+        layout.addWidget(self.button, 3, 0)
 
         container = QWidget()
 
@@ -52,58 +77,19 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(container)
 
-    def warning(self):
-        QMessageBox.warning(
-            self,
-            'Warning',
-            'Файл с данным названием существует. Придумайте другое название.'
-        )
-
-    def info(self):
-        QMessageBox.information(
-            self,
-            'Information',
-            'Вредоносных байт не удалось найти.'
-        )
-
     def the_button_was_clicked(self):
 
         text_input = self.input_path_to_dir_or_file.text()
-        text_to_save = self.input_path_to_doc.text()
         path_to_check = replace_on_slash_in_path(text_input)
 
         rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
 
         if os.path.isdir(path_to_check):
-            self.checking_files_in_directory(rules, path_to_check)
+            checking_files_in_directory(rules, path_to_check)
         else:
             matches = rules.match(path_to_check)
-            self.print_in_document(path_to_check, matches, text_to_save)
-
-    def print_in_document(self, path_to_check, matches, text_to_save):
-        document = Document()
-
-        # print(f"The file {path_to_check} follows the following rules:")
-        for match in matches:
-            print("\t", match)
-            if os.path.exists(f'docxDir/{text_to_save}.docx'):
-                self.warning()
-                break
-            else:
-                document.add_heading(f"The file {path_to_check} follows the following rules:", level=2)
-                document.add_paragraph(match)
-                document.save(f'docxDir/{text_to_save}.docx')
-
-    def checking_files_in_directory(self, rules_for_checking, address):
-        directory_path = address
-        for filename in os.listdir(directory_path):
-            filepath = os.path.join(directory_path, filename)
-            if os.path.isfile(filepath):
-                matches_files = rules_for_checking.match(filepath)
-                if matches_files:
-                    self.print_in_document(filename, matches_files, self.text_to_save)
-                else:
-                    self.info()
+            filename = os.path.basename(path_to_check).split('.')[0]
+            print_in_document(filename, matches)
 
 
 app = QApplication(sys.argv)
