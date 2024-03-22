@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QWidget, QLineEdit, QApplication, QMainWindow, QPush
 from docx import Document
 
 
-def replace_on_slash_in_path(path_to_file):
+def replace_on_slash_in_path(path_to_file): # from pathlib import Path
     count_of_slash = path_to_file.count('**\\ **')
     normal_path = path_to_file.replace('**\\ **', '/', count_of_slash)
     return normal_path
@@ -27,16 +27,15 @@ def print_in_document(path_to_check, matches):
     for match in matches:
 
         print("\t", match)
-        if os.path.exists(f'docxDir/{path_to_check}.docx'):
-            # self.warning()
-            document.add_heading(f"The file {path_to_check} follows the following rules:", level=2)
-            document.add_paragraph(match)
-            document.save(f'docxDir/{path_to_check}_scan.docx')
-            # break
+
+        if os.path.exists(f'docxDir/{str(match)}.docx'):
+            doc_to_write = Document(f'docxDir/{str(match)}.docx')
+            doc_to_write.add_paragraph(f"The file {path_to_check}")
+            doc_to_write.save(f'docxDir/{str(match)}.docx')
         else:
-            document.add_heading(f"The file {path_to_check} follows the following rules:", level=2)
-            document.add_paragraph(match)
-            document.save(f'docxDir/{path_to_check}_scan.docx')
+            document.add_paragraph(f"{str(match)}:")
+            document.add_paragraph(f"The file {path_to_check}")
+            document.save(f'docxDir/{str(match)}.docx')
 
 
 def checking_files_in_directory(rules_for_checking, address):
