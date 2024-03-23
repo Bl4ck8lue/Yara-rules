@@ -3,7 +3,7 @@ rule learn_yara_qwe {
         author="ilya"
         description="Check data on qwe"
     strings:
-	    $a={57 69 6C 64}
+	    $a={47 65 74 46 75 6C 6C 50 61 74 68 4E 61 6D 65}
     condition:
 	    $a
 }
