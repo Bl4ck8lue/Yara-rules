@@ -1,14 +1,12 @@
 import os
-import yara
 import sys
-from PyQt6.QtWidgets import QWidget, QLineEdit, QApplication, QMainWindow, QPushButton, QLabel, QGridLayout, QMessageBox
+from threading import Thread
+
+import yara
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QWidget, QApplication, QMainWindow, QPushButton, QLabel, QMessageBox, QVBoxLayout, \
+    QFileDialog, QHBoxLayout, QProgressBar
 from docx import Document
-
-
-def replace_on_slash_in_path(path_to_file): # from pathlib import Path
-    count_of_slash = path_to_file.count('**\\ **')
-    normal_path = path_to_file.replace('**\\ **', '/', count_of_slash)
-    return normal_path
 
 
 def create_rules_list(address):
@@ -21,8 +19,7 @@ def create_rules_list(address):
 
 
 def print_in_document(path_to_check, matches):
-    document = Document()
-
+    count = 0
     # print(f"The file {path_to_check} follows the following rules:")
     for match in matches:
 
@@ -33,6 +30,7 @@ def print_in_document(path_to_check, matches):
             doc_to_write.add_paragraph(f"The file {path_to_check}")
             doc_to_write.save(f'docxDir/{str(match)}.docx')
         else:
+            document = Document()
             document.add_paragraph(f"{str(match)}:")
             document.add_paragraph(f"The file {path_to_check}")
             document.save(f'docxDir/{str(match)}.docx')
@@ -51,44 +49,95 @@ def checking_files_in_directory(rules_for_checking, address):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        _signal = pyqtSignal(int)
+        self.dir_list = None
+        self.filename = None
+        self.plainTextEdit = None
         self.text_to_save = None
         self.setWindowTitle("AntiVirus Demo")
         self.resize(300, 100)
 
         self.message_of_checking_exist_file = QMessageBox()
 
-        layout = QGridLayout()
-        self.input_path_to_dir_or_file = QLineEdit(self)
+        layout_first_card = QHBoxLayout()
+        layout_second_card = QVBoxLayout()
+        layout_all = QVBoxLayout()
 
-        path_to_dir_or_file = QLabel("Введите путь к папке/файлу, который необходимо просканировать:")
+        # description of layout_first_card ----------------------------------------
+        result_of_scanning = QLabel("Выберите")
 
-        self.button = QPushButton("Просканировать")
-        self.button.setCheckable(True)
-        self.button.clicked.connect(self.the_button_was_clicked)
+        self.btn_to_choose_file = QPushButton("Файл")
+        self.btn_to_choose_file.setCheckable(True)
+        self.btn_to_choose_file.clicked.connect(self.the_btn_to_choose_file_was_clicked)
+        or_ = QLabel("или")
 
-        layout.addWidget(path_to_dir_or_file, 0, 0)
-        layout.addWidget(self.input_path_to_dir_or_file, 1, 0)
-        layout.addWidget(self.button, 3, 0)
+        self.btn_to_choose_dir = QPushButton("Папка")
+        self.btn_to_choose_dir.setCheckable(True)
+        self.btn_to_choose_dir.clicked.connect(self.the_btn_to_choose_dir_was_clicked)
+        end_of_sent = QLabel("для сканирования")
+
+        layout_first_card.addWidget(result_of_scanning)
+        layout_first_card.addWidget(self.btn_to_choose_file)
+        layout_first_card.addWidget(or_)
+        layout_first_card.addWidget(self.btn_to_choose_dir)
+        layout_first_card.addWidget(end_of_sent)
+        # -------------------------------------------------------------------------
+
+        # description of layout_second_card ----------------------------------------
+        self.pbar = QProgressBar(self)
+        self.pbar.setValue(0)
+
+        self.btn_to_scan = QPushButton("Сканировать")
+        self.btn_to_scan.setCheckable(True)
+        self.btn_to_scan.clicked.connect(self.the_button_was_clicked)
+
+        layout_second_card.addWidget(self.pbar)
+        layout_second_card.addWidget(self.btn_to_scan)
+        # --------------------------------------------------------------------------
+
+        layout_all.addLayout(layout_first_card)
+        layout_all.addLayout(layout_second_card)
 
         container = QWidget()
 
-        container.setLayout(layout)
+        container.setLayout(layout_all)
 
         self.setCentralWidget(container)
 
+    def the_btn_to_choose_file_was_clicked(self):
+        filename, filetype = QFileDialog.getOpenFileName(self,
+                                                         "Выбрать файл",
+                                                         ".",
+                                                         "All Files(*);;Text Files(*.txt);;JPEG Files(*.jpeg);;\
+                                                         PNG Files(*.png);;GIF File(*.gif)")
+        if filename != '':
+            self.btn_to_choose_dir.setEnabled(False)
+            self.filename = filename
+
+    def the_btn_to_choose_dir_was_clicked(self):  # <-----
+        dir_list = QFileDialog.getExistingDirectory(self, "Выбрать папку", ".")
+        if dir_list != '':
+            self.btn_to_choose_file.setEnabled(False)
+            self.dir_list = dir_list
+
     def the_button_was_clicked(self):
 
-        text_input = self.input_path_to_dir_or_file.text()
-        path_to_check = replace_on_slash_in_path(text_input)
+        self.thread = Thread()
+        self.thread._signal.connect(self.signal_accept)
+        self.thread.start()
+        self.btn_to_scan.setEnabled(False)
 
         rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
 
-        if os.path.isdir(path_to_check):
-            checking_files_in_directory(rules, path_to_check)
-        else:
-            matches = rules.match(path_to_check)
-            filename = os.path.basename(path_to_check).split('.')[0]
+        if self.filename is None and self.dir_list != '':
+            checking_files_in_directory(rules, self.dir_list)
+        if self.filename != '' and self.dir_list is None:
+            matches = rules.match(self.filename)
+            filename = os.path.basename(self.filename).split('.')[0]
             print_in_document(filename, matches)
+
+        self.btn_to_choose_file.setEnabled(True)
+        self.btn_to_choose_dir.setEnabled(True)
 
 
 app = QApplication(sys.argv)
