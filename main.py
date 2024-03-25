@@ -179,16 +179,6 @@ class MainWindow(QMainWindow):
             count = print_in_document(filename, matches)
             self.result.setText(f"Просканирован файл: {filename}. Выявлено угроз: {count}.")
 
-        # if self.filename is None and self.dir_list != '':
-        #     checking_files_in_directory(rules, self.dir_list)
-        # if self.filename != '' and self.dir_list is None:
-        #     matches = rules.match(self.filename)
-        #     if matches == {}:
-        #         print("No virus bytes")
-        #     else:
-        #         filename = os.path.basename(self.filename).split('.')[0]
-        #         print_in_document(filename, matches)
-
 
 app = QApplication(sys.argv)
 window = MainWindow()
