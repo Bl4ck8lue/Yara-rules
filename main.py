@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-
+from pathlib import Path
 import yara
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QWidget, QApplication, QMainWindow, QPushButton, QLabel, QMessageBox, QVBoxLayout, \
@@ -18,43 +18,16 @@ def create_rules_list(address):
     return yara_list
 
 
-def print_in_document(path_to_check, matches):
-    # print(f"The file {path_to_check} follows the following rules:")
-    count = 0
-    for match in matches:
-
-        print("\t", match)
-        count += 1
-
-        if os.path.exists(f'docxDir/{str(match)}.docx'):
-            doc_to_write = Document(f'docxDir/{str(match)}.docx')
-            doc_to_write.add_paragraph(f"The file {path_to_check}")
-            doc_to_write.save(f'docxDir/{str(match)}.docx')
-        else:
-            document = Document()
-            document.add_paragraph(f"{str(match)}:")
-            document.add_paragraph(f"The file {path_to_check}")
-            document.save(f'docxDir/{str(match)}.docx')
-
-    return count
-
-
-def checking_files_in_directory(rules_for_checking, address):
-    directory_path = address
-    x = 0
-    for filename in os.listdir(directory_path):
-        filepath = os.path.join(directory_path, filename)
-        if os.path.isfile(filepath):
-            matches_files = rules_for_checking.match(filepath)
-            if matches_files:
-                x = print_in_document(filename, matches_files)
-
-    return x
+def open_dir():
+    path = "docxDir/"
+    path = os.path.realpath(path)
+    os.startfile(path)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.extension = None
         _signal = pyqtSignal(int)
 
         self.dir_list = None
@@ -101,9 +74,9 @@ class MainWindow(QMainWindow):
         self.pbar.setValue(0)
         self.pbar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pbar.setStyleSheet("QProgressBar::chunk "
-                  "{"
-                    "background-color: pink;"
-                  "}")
+                                "{"
+                                "background-color: pink;"
+                                "}")
 
         self.btn_to_scan = QPushButton("Сканировать")
         self.btn_to_scan.setCheckable(True)
@@ -122,8 +95,13 @@ class MainWindow(QMainWindow):
         self.result.resize(150, 100)
         self.result.setReadOnly(True)
 
+        self.btn_to_open_dir = QPushButton("Открыть папку с отчётами")
+        self.btn_to_open_dir.setCheckable(True)
+        self.btn_to_open_dir.clicked.connect(open_dir)
+
         layout_third_card.addWidget(result_all)
         layout_third_card.addWidget(self.result)
+        layout_third_card.addWidget(self.btn_to_open_dir)
 
         # --------------------------------------------------------------------------
 
@@ -137,12 +115,58 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(container)
 
+    def checking_files_in_directory(self, rules_for_checking, address):
+        directory_path = address
+        x = 0
+        for filename in os.listdir(directory_path):
+            filepath = os.path.join(directory_path, filename)
+            if os.path.isfile(filepath):
+                matches_files = rules_for_checking.match(filepath)
+                if matches_files:
+                    x = self.print_in_document(filename, matches_files, True)
+
+        return x
+
+    def is_docx_exists(self, path_to_check, match, doc, flag):
+        doc.add_paragraph(f"{path_to_check}") if flag else doc.add_paragraph(f"{path_to_check}{self.extension}")
+        doc.save(f'docxDir/{str(match)}.docx')
+
+    def print_in_document(self, path_to_check, matches, flag):
+        # print(f"The file {path_to_check} follows the following rules:")
+        count = 0
+        count_check = 0
+
+        for match in matches:
+
+            print("\t", match)
+            count += 1
+            if os.path.exists(f'docxDir/{str(match)}.docx'):
+                doc_to_write = Document(f'docxDir/{str(match)}.docx')
+                for paragraph in doc_to_write.paragraphs:
+                    stx = str(path_to_check) if flag else str(path_to_check) + str(self.extension)
+                    if paragraph.text == stx:
+                        count_check = 1
+                    else:
+                        continue
+                if count_check != 0:
+                    continue
+                else:
+                    self.is_docx_exists(path_to_check, match, doc_to_write, flag)
+            else:
+                document = Document()
+                document.add_paragraph(f"Правилу {str(match)} соответствуют следующие файлы:")
+                self.is_docx_exists(path_to_check, match, document, flag)
+
+        return count
+
     def the_btn_to_choose_file_was_clicked(self):
         filename, filetype = QFileDialog.getOpenFileName(self,
                                                          "Выбрать файл",
                                                          ".",
                                                          "All Files(*);;Text Files(*.txt);;JPEG Files(*.jpeg);;\
                                                          PNG Files(*.png);;GIF File(*.gif)")
+        self.extension = Path(filename).suffix
+        print(self.extension)
         if filename != '':
             # self.btn_to_choose_dir.setEnabled(False)
             self.non_editable_line_edit.setText(filename)
@@ -155,6 +179,18 @@ class MainWindow(QMainWindow):
             self.non_editable_line_edit.setText(dir_list)
             # print(self.non_editable_line_edit.text())
             self.dir_list = dir_list
+
+    def print_result_in_UI(self, count, x):
+        if count != 0:
+            if x == 0:
+                str1 = f"Просканирована директория: {self.dir_list} ."
+            if x == 1:
+                str1 = f"Просканирован файл: {self.filename}."
+            str2 = f"\nВыявлено угроз: {count}."
+            str3 = f"\nПолный отчёт можно просмотреть, нажав на кнопку внизу."
+            self.result.setText(f"{str1} {str2} {str3}")
+        else:
+            self.result.setText(f"Во время сканирования вредоносного ПО не было обнаружено.")
 
     def the_button_was_clicked(self):
 
@@ -170,14 +206,13 @@ class MainWindow(QMainWindow):
         file_or_dir_to_scan = self.non_editable_line_edit.text()
         print(file_or_dir_to_scan)
         if os.path.isdir(file_or_dir_to_scan):
-            count = checking_files_in_directory(rules, self.dir_list)
-            self.result.setText(f"Просканирована директория: {self.dir_list} . Выявлено угроз: {count}.")
+            count = self.checking_files_in_directory(rules, self.dir_list)
+            self.print_result_in_UI(count, 0)
         else:
             matches = rules.match(self.filename)
-            print(matches.values())
             filename = os.path.basename(self.filename).split('.')[0]
-            count = print_in_document(filename, matches)
-            self.result.setText(f"Просканирован файл: {filename}. Выявлено угроз: {count}.")
+            count = self.print_in_document(filename, matches, False)
+            self.print_result_in_UI(count, 1)
 
 
 app = QApplication(sys.argv)
