@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         self.plainTextEdit = None
         self.text_to_save = None
         self.setWindowTitle("AntiVirus Demo")
-        self.resize(300, 100)
+        self.setFixedSize(410, 300)
 
         self.message_of_checking_exist_file = QMessageBox()
 
@@ -78,6 +78,7 @@ class MainWindow(QMainWindow):
         self.btn_to_choose_file.setCheckable(True)
         self.btn_to_choose_file.clicked.connect(self.the_btn_to_choose_file_was_clicked)
         or_ = QLabel("или")
+        or_.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.btn_to_choose_dir = QPushButton("Папка")
         self.btn_to_choose_dir.setCheckable(True)
@@ -115,9 +116,11 @@ class MainWindow(QMainWindow):
 
         # description of layout_third_card -----------------------------------------
         result_all = QLabel("Результаты сканирования:")
+        result_all.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.result = QTextEdit(self)
         self.result.resize(150, 100)
+        self.result.setReadOnly(True)
 
         layout_third_card.addWidget(result_all)
         layout_third_card.addWidget(self.result)
