@@ -2,7 +2,10 @@ import os
 import sys
 import time
 from pathlib import Path
+import platform
+import subprocess
 import yara
+
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QWidget, QApplication, QMainWindow, QPushButton, QLabel, QMessageBox, QVBoxLayout, \
     QFileDialog, QHBoxLayout, QProgressBar, QLineEdit, QTextEdit
@@ -21,7 +24,10 @@ def create_rules_list(address):
 def open_dir():
     path = "docxDir/"
     path = os.path.realpath(path)
-    os.startfile(path)
+    if platform.system() == 'Windows':
+        os.startfile(path)
+    if platform.system() == 'Linux':
+        os.system('xdg-open "%s"' % path)
 
 
 class MainWindow(QMainWindow):
@@ -182,6 +188,7 @@ class MainWindow(QMainWindow):
 
     def print_result_in_UI(self, count, x):
         if count != 0:
+            str1 = 0
             if x == 0:
                 str1 = f"Просканирована директория: {self.dir_list} ."
             if x == 1:
