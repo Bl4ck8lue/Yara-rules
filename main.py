@@ -3,7 +3,6 @@ import sys
 import time
 from pathlib import Path
 import platform
-import subprocess
 import yara
 
 from PyQt6.QtCore import pyqtSignal, Qt

@@ -3,7 +3,7 @@ rule learn_yara_lmn {
         author="ilya"
         description="Check data on lmn"
     strings:
-	    $a={65 74 43 75 72 72 65 6E 74 50 72 6F 63 65 73 55}
+	    $a={6A[2]6C7A78637662}
     condition:
 	    $a
 }
