@@ -104,7 +104,7 @@ rule %s {
                     # print "\t\tfound %s" % (match[1])
                     start = int(match[1])
                     jump_regex = re.compile('(\{(%d)-\})' % (start))
-                    if (start < 256):
+                    if start < 256:
                         # print "\t\t\tfound short jump of len %d" % (start)
                         signature = jump_regex.sub('[0-\g<2>]', signature)
                     else:
@@ -124,7 +124,7 @@ rule %s {
                     start = int(match[1])
                     end = int(match[2])
                     jump_regex = re.compile('(\{(%d)-(%d)\})' % (start, end))
-                    if (end - start == 0):
+                    if end - start == 0:
                         if opts.verbose:
                             print("\t**Skip nothing, impossible!**")
                         signature = jump_regex.sub('', signature)
@@ -168,18 +168,25 @@ rule %s {
         conds = "\t"
         x = 0
         for detect in rules[rule]:
-            detects += "$a%d = {%s}\r\n" % (x, detect)
-            # check is first bytes include ?
-            for i in range(7, 9, 1):
-                if detects[i] == '?':
-                    detects = ''
-                    break
+            # print(detect)
+            y = 0
+            new_detect = ''
+            if detect[0] == '?' or detect[1] == '?':
+                new_detect = '' + detect[2:]
+            if detect[len(detect) - 1] == ']':
+                new_detect = detect[:len(detect) - 3] + '44'
+            # print(new_detect)
+            if detect[0] == 'T' and detect[1] == 'h' and detect[2] == 'i' and detect[3] == 's':
+                detects += "$a{0} = \"{1}\"\r\n".format(x, detect)
+                y = 1
+            if y == 0:
+                if new_detect == '':
+                    detects += "$a{0} = {{{1}}}\r\n".format(x, detect)
                 else:
-                    continue
-            # ------------------------------
+                    detects += "$a{0} = {{{1}}}\r\n".format(x, new_detect)
             if x > 0:
                 conds += " and "
-            conds += "$a%d" % (x)
+            conds += "$a%d" % x
             x += 1
         if detects == '':
             if opts.verbose:

@@ -119,6 +119,17 @@ class MainWindow(QMainWindow):
         container.setLayout(layout_all)
 
         self.setCentralWidget(container)
+        self.info()
+
+    def info(self):
+        QMessageBox.information(
+            self,
+            'Information',
+            'This is important information.'
+        )
+        if not os.path.exists("rulesDir/allRules.yar"):
+            path = "wg.py"
+            os.system('python3.12 "%s"' % path)
 
     def checking_files_in_directory(self, rules_for_checking, address):
         directory_path = address
