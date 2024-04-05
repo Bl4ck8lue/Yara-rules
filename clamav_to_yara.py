@@ -173,8 +173,16 @@ rule %s {
             new_detect = ''
             if detect[0] == '?' or detect[1] == '?':
                 new_detect = '' + detect[2:]
-            if detect[len(detect) - 1] == ']':
-                new_detect = detect[:len(detect) - 3] + '44'
+            if detect[len(detect)-1] == ']':
+                numb_for_lasts_bytes = int(detect[len(detect)-2])
+                new_detect = detect[:len(detect)-3]
+                for i in range(0, numb_for_lasts_bytes, 1):
+                    new_detect += '??'
+            name_rule = rule[:23]
+            if name_rule == "Pdf_Exploit_Agent_35528" or name_rule == "Pdf_Exploit_Agent_35529" or name_rule == "Pdf_Exploit_Agent_35530":
+                new_detect = detect[:203]
+            elif name_rule == "Pdf_Exploit_Agent_35531" or name_rule == "Pdf_Exploit_Agent_35532":
+                new_detect = detect[:201]
             # print(new_detect)
             if detect[0] == 'T' and detect[1] == 'h' and detect[2] == 'i' and detect[3] == 's':
                 detects += "$a{0} = \"{1}\"\r\n".format(x, detect)

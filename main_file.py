@@ -5,7 +5,7 @@ from pathlib import Path
 import platform
 import yara
 
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtWidgets import QWidget, QApplication, QMainWindow, QPushButton, QLabel, QMessageBox, QVBoxLayout, \
     QFileDialog, QHBoxLayout, QProgressBar, QLineEdit, QTextEdit
 from docx import Document
@@ -40,14 +40,23 @@ class MainWindow(QMainWindow):
         self.plainTextEdit = None
         self.text_to_save = None
         self.setWindowTitle("AntiVirus Demo")
-        self.setFixedSize(410, 300)
+        self.setFixedSize(460, 300)
 
         self.message_of_checking_exist_file = QMessageBox()
 
+        layout_zero_card = QVBoxLayout()
         layout_first_card = QHBoxLayout()
         layout_second_card = QVBoxLayout()
         layout_third_card = QVBoxLayout()
         layout_all = QVBoxLayout()
+
+        # description of layout_zero_card -----------------------------------------
+        self.btn_to_update_db = QPushButton("Проверить обновление базы сигнатур")
+        self.btn_to_update_db.setCheckable(True)
+        self.btn_to_update_db.clicked.connect(self.check_update)
+
+        layout_zero_card.addWidget(self.btn_to_update_db)
+        # -------------------------------------------------------------------------
 
         # description of layout_first_card ----------------------------------------
         result_of_scanning = QLabel("Выберите")
@@ -94,6 +103,7 @@ class MainWindow(QMainWindow):
 
         # description of layout_third_card -----------------------------------------
         result_all = QLabel("Результаты сканирования:")
+
         result_all.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.result = QTextEdit(self)
@@ -109,7 +119,7 @@ class MainWindow(QMainWindow):
         layout_third_card.addWidget(self.btn_to_open_dir)
 
         # --------------------------------------------------------------------------
-
+        layout_all.addLayout(layout_zero_card)
         layout_all.addLayout(layout_first_card)
         layout_all.addLayout(layout_second_card)
         layout_all.addLayout(layout_third_card)
@@ -119,17 +129,23 @@ class MainWindow(QMainWindow):
         container.setLayout(layout_all)
 
         self.setCentralWidget(container)
-        self.info()
 
-    def info(self):
-        QMessageBox.information(
-            self,
-            'Information',
-            'This is important information.'
-        )
+    def check_update(self):
+        # self.timer.stop()
         if not os.path.exists("rulesDir/allRules.yar"):
+            self.result.setText("Идёт обновление базы данных сигнатур")
+            self.btn_to_choose_dir.setEnabled(False)
+            self.btn_to_choose_file.setEnabled(False)
+            self.btn_to_open_dir.setEnabled(False)
+            self.btn_to_scan.setEnabled(False)
             path = "wg.py"
-            os.system('python3.12 "%s"' % path)
+            os.system('python3.12 {0}'.format(path))
+        else:
+            self.btn_to_choose_dir.setEnabled(True)
+            self.btn_to_choose_file.setEnabled(True)
+            self.btn_to_open_dir.setEnabled(True)
+            self.btn_to_scan.setEnabled(True)
+            self.result.setText("")
 
     def checking_files_in_directory(self, rules_for_checking, address):
         directory_path = address
@@ -196,7 +212,7 @@ class MainWindow(QMainWindow):
             # print(self.non_editable_line_edit.text())
             self.dir_list = dir_list
 
-    def print_result_in_UI(self, count, x):
+    def print_result_in_ui(self, count, x):
         if count != 0:
             str1 = 0
             if x == 0:
@@ -224,12 +240,12 @@ class MainWindow(QMainWindow):
         print(file_or_dir_to_scan)
         if os.path.isdir(file_or_dir_to_scan):
             count = self.checking_files_in_directory(rules, self.dir_list)
-            self.print_result_in_UI(count, 0)
+            self.print_result_in_ui(count, 0)
         else:
             matches = rules.match(self.filename)
             filename = os.path.basename(self.filename).split('.')[0]
             count = self.print_in_document(filename, matches, False)
-            self.print_result_in_UI(count, 1)
+            self.print_result_in_ui(count, 1)
 
 
 app = QApplication(sys.argv)
