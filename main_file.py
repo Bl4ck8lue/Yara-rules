@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 import platform
 import yara
+import threading
 
 from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtWidgets import QWidget, QApplication, QMainWindow, QPushButton, QLabel, QMessageBox, QVBoxLayout, \
@@ -53,7 +54,7 @@ class MainWindow(QMainWindow):
         # description of layout_zero_card -----------------------------------------
         self.btn_to_update_db = QPushButton("Проверить обновление базы сигнатур")
         self.btn_to_update_db.setCheckable(True)
-        self.btn_to_update_db.clicked.connect(self.check_update)
+        self.btn_to_update_db.clicked.connect(self.info)
 
         layout_zero_card.addWidget(self.btn_to_update_db)
         # -------------------------------------------------------------------------
@@ -131,21 +132,16 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
     def check_update(self):
-        # self.timer.stop()
-        if not os.path.exists("rulesDir/allRules.yar"):
-            self.result.setText("Идёт обновление базы данных сигнатур")
-            self.btn_to_choose_dir.setEnabled(False)
-            self.btn_to_choose_file.setEnabled(False)
-            self.btn_to_open_dir.setEnabled(False)
-            self.btn_to_scan.setEnabled(False)
-            path = "wg.py"
-            os.system('python3.12 {0}'.format(path))
-        else:
-            self.btn_to_choose_dir.setEnabled(True)
-            self.btn_to_choose_file.setEnabled(True)
-            self.btn_to_open_dir.setEnabled(True)
-            self.btn_to_scan.setEnabled(True)
-            self.result.setText("")
+        path = 'wg.py'
+        os.system('python3 {0}'.format(path))
+        self.btn_to_update_db.setEnabled(True)
+        time.sleep(10)
+        # self.btn_to_update_db.setEnabled(False)
+
+    def info(self):
+        self.btn_to_update_db.setEnabled(False)
+        x = threading.Thread(target=self.check_update, daemon=True)
+        x.start()
 
     def checking_files_in_directory(self, rules_for_checking, address):
         directory_path = address
@@ -226,26 +222,30 @@ class MainWindow(QMainWindow):
             self.result.setText(f"Во время сканирования вредоносного ПО не было обнаружено.")
 
     def the_button_was_clicked(self):
-
-        rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
-
-        for i in range(101):
-            # slowing down the loop
-            time.sleep(0.01)
-
-            # setting value to progress bar
-            self.pbar.setValue(i)
-
         file_or_dir_to_scan = self.non_editable_line_edit.text()
-        print(file_or_dir_to_scan)
-        if os.path.isdir(file_or_dir_to_scan):
-            count = self.checking_files_in_directory(rules, self.dir_list)
-            self.print_result_in_ui(count, 0)
+        if not os.path.isfile("rulesDir/allRules.yar") and not os.path.isfile("rulesDir/allRules_new.yar"):
+            self.result.setText("Не скачана база сигнатур.")
+        if file_or_dir_to_scan == "":
+            self.result.setText("Не выбран путь к файлу.")
         else:
-            matches = rules.match(self.filename)
-            filename = os.path.basename(self.filename).split('.')[0]
-            count = self.print_in_document(filename, matches, False)
-            self.print_result_in_ui(count, 1)
+            rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
+
+            for i in range(101):
+                # slowing down the loop
+                time.sleep(0.01)
+
+                # setting value to progress bar
+                self.pbar.setValue(i)
+
+            print(file_or_dir_to_scan)
+            if os.path.isdir(file_or_dir_to_scan):
+                count = self.checking_files_in_directory(rules, self.dir_list)
+                self.print_result_in_ui(count, 0)
+            else:
+                matches = rules.match(self.filename)
+                filename = os.path.basename(self.filename).split('.')[0]
+                count = self.print_in_document(filename, matches, False)
+                self.print_result_in_ui(count, 1)
 
 
 app = QApplication(sys.argv)
