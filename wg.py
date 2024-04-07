@@ -18,29 +18,38 @@ def create_yar_rules(path):
     os.rename("main.ndb", "main_rule.ndb")
     os.system('rm main.*')
 
-    os.system('python3 clamav_to_yara.py -f main_rule.ndb -o allRules.yar')
+    os.system('python3 clamav_to_yara.py -f main_rule.ndb -o allRules_new.yar')
 
-    os.system('cp allRules.yar /home/user/PycharmProjects/Yara-rules/rulesDir/')
+    os.system('cp allRules_new.yar ~/PycharmProjects/Yara-rules/rulesDir/')
+
+    os.system('rm allRules_new.yar COPYING main_all.cvd main_rule.ndb main_new.cvd')
+
+    if os.path.isfile("rulesDir/allRules.yar"):
+        old_md5 = md5("rulesDir/allRules.yar")
+        new_md5 = md5("rulesDir/allRules_new.yar")
+
+        if old_md5 == new_md5:
+            os.remove("rulesDir/allRules_new.yar")
+        else:
+            os.remove("rulesDir/allRules.yar")
+            os.rename("rulesDir/allRules_new.yar", "rulesDir/allRules.yar")
 
 
-url = 'https://clmvupd.deltamoby.ru/main.cvd'
+def main():
+    url = 'https://clmvupd.deltamoby.ru/main.cvd'
 
-if os.path.isfile("main_all.cvd"):
+    if os.path.isfile("main_all.cvd"):
 
-    urllib.request.urlretrieve(url, 'main_new.cvd')
+        urllib.request.urlretrieve(url, 'main_new.cvd')
 
-    old_md5 = md5("main_all.cvd")
-    new_md5 = md5("main_new.cvd")
+        create_yar_rules("main_new.cvd")
 
-    if old_md5 == new_md5:
-        os.remove("main_new.cvd")
+    elif os.path.isfile("main.cvd"):
+        create_yar_rules("main.cvd")
     else:
-        os.remove("main.cvd")
-        os.rename("main_new.cvd", "main_all.cvd")
-    create_yar_rules("main_all.cvd")
+        urllib.request.urlretrieve(url, 'main_all.cvd')
+        create_yar_rules("main_all.cvd")
 
-elif os.path.isfile("main.cvd"):
-    create_yar_rules("main.cvd")
-else:
-    urllib.request.urlretrieve(url, 'main_all.cvd')
-    create_yar_rules("main_all.cvd")
+
+if __name__ == '__main__':
+    main()
