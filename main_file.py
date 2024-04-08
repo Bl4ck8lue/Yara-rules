@@ -134,12 +134,20 @@ class MainWindow(QMainWindow):
     def check_update(self):
         path = 'wg.py'
         os.system('python3 {0}'.format(path))
-        self.btn_to_update_db.setEnabled(True)
-        time.sleep(10)
+        for i in range(101):
+            # slowing down the loop
+            time.sleep(0.1)
+
+            # setting value to progress bar
+
+            self.pbar.setValue(i)
+        time.sleep(5)
+        self.pbar.setValue(0)
+        self.btn_to_scan.setEnabled(True)
         # self.btn_to_update_db.setEnabled(False)
 
     def info(self):
-        self.btn_to_update_db.setEnabled(False)
+        self.btn_to_scan.setEnabled(False)
         x = threading.Thread(target=self.check_update, daemon=True)
         x.start()
 
@@ -223,18 +231,19 @@ class MainWindow(QMainWindow):
 
     def the_button_was_clicked(self):
         file_or_dir_to_scan = self.non_editable_line_edit.text()
-        if not os.path.isfile("rulesDir/allRules.yar") and not os.path.isfile("rulesDir/allRules_new.yar"):
+        if len(os.listdir("rulesDir/")) == 0:
             self.result.setText("Не скачана база сигнатур.")
-        if file_or_dir_to_scan == "":
+        elif file_or_dir_to_scan == "":
             self.result.setText("Не выбран путь к файлу.")
         else:
             rules = yara.compile(filepaths=create_rules_list('rulesDir/'))
 
             for i in range(101):
                 # slowing down the loop
-                time.sleep(0.01)
+                time.sleep(0.1)
 
                 # setting value to progress bar
+
                 self.pbar.setValue(i)
 
             print(file_or_dir_to_scan)

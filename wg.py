@@ -22,7 +22,7 @@ def create_yar_rules(path):
 
     os.system('cp allRules_new.yar ~/PycharmProjects/Yara-rules/rulesDir/')
 
-    os.system('rm allRules_new.yar COPYING main_all.cvd main_rule.ndb main_new.cvd')
+    os.system('rm allRules_new.yar COPYING main_all.cvd main_rule.ndb')
 
     if os.path.isfile("rulesDir/allRules.yar"):
         old_md5 = md5("rulesDir/allRules.yar")
@@ -36,7 +36,7 @@ def create_yar_rules(path):
 
 
 def main():
-    url = 'https://clmvupd.deltamoby.ru/main.cvd'
+    url = 'https://unlix.ru/clamav/main.cvd'
 
     if os.path.isfile("main_all.cvd"):
 
